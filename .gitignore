@@ -1,8 +1,9 @@
 build/
 dist/
+_e/
 .vscode/
 __pycache__/
-jitcsim.egg-info/
+imcn.egg-info/
 .ipynb_checkpoints/
 *.txt
 *.png
