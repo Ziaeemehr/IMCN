@@ -1,17 +1,15 @@
+import warnings
 import numpy as np
 import pylab as plt
 from numpy import pi
 from time import time
 from imcn import calc_TE
+from jitcsim import plot_order
 from multiprocessing import Pool
 from numpy.random import uniform, normal
-from jitcsim.models.kuramoto import Kuramoto_II
-# from jitcsim.visualization import plot_order
-from jitcsim import plot_order
+from jitcsim.models.kuramoto_sde import Kuramoto_II
 from imcn import time_average_correlation_matrix
-import warnings
 warnings.filterwarnings("ignore") # to hide all warnings
-# from jitcsim.networks import make_network
 
 
 def run_for_each(coupl):
@@ -25,6 +23,7 @@ def run_for_each(coupl):
     controls = [coupl]
     I = Kuramoto_II(parameters)
     I.set_initial_state(uniform(-pi, pi, N))
+    I.set_integrator_parameters(atol=1e-6, rtol=1e-3)
     data = I.simulate(controls, mode_2pi=False)
     x = data['x']
 
@@ -83,6 +82,7 @@ if __name__ == "__main__":
     N = 3
     omega = [0.3, 0.4, 0.5]
     initial_state = uniform(-pi, pi, N)
+    noise_amplitude = 0.001
     num_ensembles = 2
     num_processes = 4
     num_threads = 1
@@ -99,10 +99,11 @@ if __name__ == "__main__":
         't_initial': 0.,                    # initial time of integration
         "t_final": 500,                    # final time of integration
         't_transition': 100.0,              # transition time
-        "interval": 0.05,                   # time interval for sampling
+        "interval": 0.01,                   # time interval for sampling
 
         # "coupling": coupling0,              # coupling strength
         "alpha": 0.0,                       # frustration
+        "sigma": noise_amplitude,
         "omega": omega,                     # initial angular frequencies
         'initial_state': initial_state,     # initial phase of oscillators
 
