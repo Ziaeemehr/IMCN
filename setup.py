@@ -17,11 +17,12 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-         "License :: OSI Approved :: MIT License",
-         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.8",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
     ],
     python_requires='>=3.8',
-    # package_data={'sbi_nmms': ['DampOscillator.so']},
     install_requires=requirements,
-    # include_package_data=True,
+    include_package_data=True,
+    package_data={'': ['infodynamics.jar']},
 )

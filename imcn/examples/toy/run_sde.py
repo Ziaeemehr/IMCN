@@ -82,7 +82,7 @@ if __name__ == "__main__":
     N = 3
     omega = [0.3, 0.4, 0.5]
     initial_state = uniform(-pi, pi, N)
-    noise_amplitude = 0.001
+    noise_amplitude = 0.0
     num_ensembles = 2
     num_processes = 4
     num_threads = 1
