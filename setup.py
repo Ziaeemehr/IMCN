@@ -7,7 +7,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name='imcn',
-    version='0.0.1',
+    version='0.1',
     author="Abolfazl Ziaeemehr",
     author_email="a.ziaeemehr@gmail.com",
     description="Information measurements on complex networks",
