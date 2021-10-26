@@ -1,8 +1,7 @@
-import os
 import imcn
-from os.path import join
-import numpy as np
 import jpype as jp
+from os.path import join
+# import numpy as np
 
 
 def get_jar_location():
@@ -29,16 +28,10 @@ def init_jvm():
 def calc_TE(source, target, num_threads=1):
 
     init_jvm()
-    # jar_location = get_jar_location()
-    # jp.startJVM(jp.getDefaultJVMPath(), "-ea",
-    #             "-Djava.class.path=" + jar_location)
     calcTEClass = jp.JPackage(
         "infodynamics.measures.continuous.kraskov").TransferEntropyCalculatorKraskov
     calcTE = calcTEClass()
     calcTE.setProperty("NUM_THREADS", str(num_threads))
-
-    # source = coordinates[links[jj][0]][:-1]
-    # target = np.diff(coordinates[links[jj][1]])
     calcTE.initialise()
     calcTE.setObservations(source, target)
     te = calcTE.computeAverageLocalOfObservations()
@@ -46,6 +39,19 @@ def calc_TE(source, target, num_threads=1):
     return te
 
 
-def calc_MI(source, target, num_threads=1, jar_location=None):
+def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1):
 
-    pass
+    assert((len(source) > 0) and (len(target) > 0))
+    init_jvm()
+    
+    calcClass = jp.JPackage(
+        "infodynamics.measures.continuous.kraskov").MutualInfoCalculatorMultiVariateKraskov2
+    calc = calcClass()
+    calc.setProperty("k", str(int(k)))
+    calc.setProperty("NUM_THREADS", str(int(NUM_THREADS)))
+    calc.setProperty("TIME_DIFF", str(int(TIME_DIFF)))
+    calc.initialise()
+    calc.setObservations(source.tolist(), target.tolist())
+    me = calc.computeAverageLocalOfObservations()
+
+    return me * 1.4426950408889634  # np.log2(np.exp(1)) in bits

@@ -3,29 +3,33 @@ import numpy as np
 import pylab as plt
 from numpy import pi
 from time import time
-from imcn import calc_TE
 from jitcsim import plot_order
 from multiprocessing import Pool
-from numpy.random import uniform, normal
+from numpy.random import uniform
+from imcn import calc_TE, calc_MI
 from jitcsim.models.kuramoto_sde import Kuramoto_II
 from imcn import time_average_correlation_matrix
 warnings.filterwarnings("ignore")  # to hide all warnings
 
 
+# -------------------------------------------------------------------
+# -------------------------------------------------------------------
+
 def run_for_each(coupl):
     """
     run the simulation for each coupling
     The initial state and frequencies are changed.
-    
+
     Parameters
     -----------
     coupl : float
         coupling strength 
-    
+
     return: dict("g"=coupl, "R"=R, "te"=te, "cor"=cor)
         - g : coupling strength
         - R : time average order parameter
-        - te: average transfer entropy
+        - te: time average transfer entropy
+        - mi: time average mutual information
         - cor: selected elements of time average correlation matrix
     """
 
@@ -46,22 +50,38 @@ def run_for_each(coupl):
         cor[i] = corr[e[0], e[1]]
 
     te = np.zeros(len(links))
+    mi = np.zeros(len(links))
 
     for i in range(len(links)):
         source_id = links[i][0]
         target_id = links[i][1]
         source = x[:-1, source_id]
         target = np.diff(x[:, target_id])
-        te[i] = calc_TE(source, target, num_threads=num_threads)
+        if parameters["CALCUALTE_TE"]:
+            te[i] = calc_TE(source,
+                            target,
+                            num_threads=num_threads)
+        if parameters["CALCULATE_MI"]:
+            mi[i] = calc_MI(source,
+                            target,
+                            TIME_DIFF=0,
+                            NUM_THREADS=num_threads
+                            )
 
     # time average order parameter
     R = np.mean(I.order_parameter(x))
 
-    return {"g": coupl, "R": R, "te": te, "cor": cor}
+    return {"g": coupl,
+            "R": R,
+            "te": te,
+            "mi": mi,
+            "cor": cor}
+
+# -------------------------------------------------------------------
+# -------------------------------------------------------------------
 
 
 def batch_run(couplings, num_ensembles, num_links):
-
     """
     run simulations in parallel using multiprocessing
 
@@ -82,7 +102,6 @@ def batch_run(couplings, num_ensembles, num_links):
 
     """
 
-
     par = []
     for i in range(len(couplings)):
         for j in range(num_ensembles):
@@ -93,29 +112,43 @@ def batch_run(couplings, num_ensembles, num_links):
 
     R = [d['R'] for d in data]
     TE = [d['te'] for d in data]
+    MI = [d['mi'] for d in data]
     Cor = [d["cor"] for d in data]
 
+    results = {}
     R = np.reshape(R, (len(couplings), num_ensembles))
     R = np.mean(R, axis=1)
-
-    TE = np.reshape(TE, (len(couplings), num_ensembles, num_links))
-    TE = np.sum(TE, axis=1)  # average on ensebles
+    results["R"] = R
 
     Cor = np.reshape(Cor, (len(couplings), num_ensembles, num_links))
-    Cor = np.mean(Cor, axis=1)
+    Cor = np.mean(Cor, axis=1)  # average on ensebles
+    results["Cor"] = Cor
 
-    return {"R": R, "TE": TE, "Cor": Cor}
+    if parameters["CALCUALTE_TE"]:
+        TE = np.reshape(TE, (len(couplings), num_ensembles, num_links))
+        TE = np.mean(TE, axis=1)  # average on ensebles
+        results["TE"] = TE
+
+    if parameters["CALCULATE_MI"]:
+        MI = np.reshape(MI, (len(couplings), num_ensembles, num_links))
+        MI = np.mean(MI, axis=1)  # average on ensebles
+        results["MI"] = MI
+
+    return results
 
 
 if __name__ == "__main__":
 
     np.random.seed(2)
 
+    # SETTING PARAMETERS --------------------------------------------
+    # ---------------------------------------------------------------
     N = 3
     omega = [0.3, 0.4, 0.5]
     initial_state = uniform(-pi, pi, N)
-    noise_amplitude = 0.0
-    num_ensembles = 2
+    couplings = np.linspace(0.01, 0.3, 21)
+    noise_amplitude = 0.001
+    num_ensembles = 5
     num_processes = 4
     num_threads = 1
 
@@ -130,8 +163,8 @@ if __name__ == "__main__":
         'N': N,                             # number of nodes
         'adj': adj,                         # adjacency matrix
         't_initial': 0.,                    # initial time of integration
-        "t_final": 700,                     # final time of integration
-        't_transition': 200.0,              # transition time
+        "t_final": 500,                     # final time of integration
+        't_transition': 100.0,              # transition time
         "interval": 0.01,                   # time interval for sampling
 
         "alpha": 0.0,                       # frustration
@@ -142,27 +175,35 @@ if __name__ == "__main__":
 
         "use_omp": False,                   # use OpenMP
         "output": "data",                   # output directory
+        "CALCUALTE_TE": True,
+        "CALCULATE_MI": True
     }
 
     # compilings ----------------------------------------------------
+    # ---------------------------------------------------------------
     sol = Kuramoto_II(parameters)
     sol.compile()
 
     # running the simulation in parallel ----------------------------
+    # ---------------------------------------------------------------
     start_time = time()
-    couplings = np.linspace(0, 0.4, 21)
     data = batch_run(couplings, num_ensembles, num_links=3)
     print("Simulation time: {:.3f} seconds".format(time()-start_time))
 
     # saving to file ------------------------------------------------
+    # ---------------------------------------------------------------
     np.savez("data/data",
              g=couplings,
              R=data['R'],
              Cor=data['Cor'],
-             TE=data['TE'])
+             TE=data['TE'],
+             MI=data['MI']
+             )
 
     # ploting -------------------------------------------------------
-    fig, ax = plt.subplots(2, figsize=(8, 10), sharex=True)
+    # ---------------------------------------------------------------
+    plt.style.use("ggplot")
+    fig, ax = plt.subplots(3, figsize=(8, 10), sharex=True)
     plot_order(couplings,
                data['R'],
                ax=ax[0],
@@ -174,9 +215,9 @@ if __name__ == "__main__":
                )
 
     labels = ["1->2", "1->3", "2->3"]
-
-    Cor = data['Cor']
-    TE = data['TE']
+    Cor = data["Cor"]
+    TE = data["TE"]
+    MI = data["MI"]
 
     for i in range(3):
         ax[0].plot(couplings, Cor[:, i], marker="s", label=labels[i])
@@ -184,9 +225,14 @@ if __name__ == "__main__":
     for i in range(3):
         ax[1].plot(couplings, TE[:, i], marker="o", label=labels[i])
 
-    ax[0].legend(frameon=False)
-    ax[1].legend(frameon=False)
-    ax[1].set_xlabel("coupling")
+    for i in range(3):
+        ax[2].plot(couplings, MI[:, i], marker="*", label=labels[i])
+
+    for i in range(3):
+        ax[i].legend(frameon=False)
+    ax[-1].set_xlabel("coupling")
+    ax[1].set_ylabel("TE", fontsize=14)
+    ax[2].set_ylabel("MI", fontsize=14)
 
     plt.tight_layout()
     plt.savefig("data/FIG.png", dpi=150)
