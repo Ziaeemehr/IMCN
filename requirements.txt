@@ -1,0 +1,13 @@
+wheel
+numpy
+scipy
+sympy
+cython
+numba
+jitcode
+jitcdde
+jitcsde
+networkx
+matplotlib
+jitcsim
+JPype1
