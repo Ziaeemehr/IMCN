@@ -4,5 +4,6 @@ from .calculateInfo import (calc_TE,
 
 
 from .utility import (correlation_matrix,
+                      select_random_edges,
                       time_average_correlation_matrix)
-                      
+from .visialization import plot_degree_omega_distribution

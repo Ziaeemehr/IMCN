@@ -8,7 +8,9 @@ from multiprocessing import Pool
 from numpy.random import uniform
 from imcn import calc_TE, calc_MI
 from jitcsim.models.kuramoto_sde import Kuramoto_II
-from imcn import time_average_correlation_matrix
+from imcn import (time_average_correlation_matrix,
+                  select_random_edges, make_graph,
+                  plot_degree_omega_distribution)
 warnings.filterwarnings("ignore")  # to hide all warnings
 
 
@@ -42,7 +44,6 @@ def run_for_each(coupl):
     data = I.simulate(controls, mode_2pi=False)
     x = data['x']
 
-    links = [(0, 1), (0, 2), (1, 2)]
     corr = time_average_correlation_matrix(x, step=10)
     cor = np.zeros(len(links))
     for i in range(len(links)):
@@ -139,25 +140,27 @@ def batch_run(couplings, num_ensembles, num_links):
 
 if __name__ == "__main__":
 
-    np.random.seed(2)
+    seed = 2
+    np.random.seed(seed)
 
     # SETTING PARAMETERS --------------------------------------------
     # ---------------------------------------------------------------
-    N = 3
-    omega = [0.3, 0.4, 0.5]
+    N = 60
+    omega = np.random.uniform(low=0, high=1, size=N)
     initial_state = uniform(-pi, pi, N)
-    couplings = np.linspace(0.01, 0.3, 21)
+    couplings = np.linspace(0.0, 0.05, 6)
+    num_links = 1
     noise_amplitude = 0.001
-    num_ensembles = 2
+    num_ensembles = 1
     num_processes = 4
     num_threads = 1
 
-    # aij means there is a link from j to i
-    adj = np.asarray([
-        [0, 1, 0],
-        [0, 0, 1],
-        [0, 0, 0]
-    ])
+    # Frequency Gap-conditioned (FGC) network
+    obj = make_graph(seed=seed)
+    adj = obj.fgc_network(N=N, k=10, gamma=0.5, omega=omega)
+    links = select_random_edges(adj, num_links=num_links, directed=True, seed=seed)
+    plot_degree_omega_distribution(adj, omega, "data/omega_k.png")
+
 
     parameters = {
         'N': N,                             # number of nodes
@@ -187,7 +190,7 @@ if __name__ == "__main__":
     # running the simulation in parallel ----------------------------
     # ---------------------------------------------------------------
     start_time = time()
-    data = batch_run(couplings, num_ensembles, num_links=3)
+    data = batch_run(couplings, num_ensembles, num_links=num_links)
     print("Simulation time: {:.3f} seconds".format(time()-start_time))
 
     # saving to file ------------------------------------------------
@@ -214,26 +217,25 @@ if __name__ == "__main__":
                close_fig=False
                )
 
-    labels = ["1->2", "1->3", "2->3"]
     Cor = data["Cor"]
     TE = data["TE"]
     MI = data["MI"]
 
-    for i in range(3):
-        ax[0].plot(couplings, Cor[:, i], marker="s", label=labels[i])
+    for i in range(num_links):
+        ax[0].plot(couplings, Cor[:, i], marker="s")
 
-    for i in range(3):
-        ax[1].plot(couplings, TE[:, i], marker="o", label=labels[i])
+    for i in range(num_links):
+        ax[1].plot(couplings, TE[:, i], marker="o", )
 
-    for i in range(3):
-        ax[2].plot(couplings, MI[:, i], marker="*", label=labels[i])
+    for i in range(num_links):
+        ax[2].plot(couplings, MI[:, i], marker="*")
 
-    for i in range(3):
-        ax[i].legend(frameon=False)
+    # for i in range(3):
+    #     ax[i].legend(frameon=False)
     ax[-1].set_xlabel("coupling")
     ax[1].set_ylabel("TE", fontsize=14)
     ax[2].set_ylabel("MI", fontsize=14)
 
     plt.tight_layout()
-    plt.savefig("data/FIG.png", dpi=150)
+    plt.savefig("data/fgc_fig.png", dpi=150)
     plt.close()
