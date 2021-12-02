@@ -11,3 +11,4 @@ networkx
 matplotlib
 jitcsim
 JPype1
+python-dev-tools
