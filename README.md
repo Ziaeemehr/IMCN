@@ -15,5 +15,11 @@ source info_ve/bin/activate
 ```
 
 
+you may need to install Python-dev if you get Python.h not found:
+```
+sudo apt-get install update
+sudo apt-get install python3-dev
+```
+
 
 
