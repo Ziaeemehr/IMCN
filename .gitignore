@@ -8,3 +8,5 @@ imcn.egg-info/
 *.txt
 *.png
 *.so
+*.npz
+*.png
