@@ -6,6 +6,14 @@ from os.path import join
 
 def get_jar_location():
 
+    '''
+    Returns the location of the infodynamics.jar file
+
+    Return: str
+        location of the infodynamics.jar file
+
+    '''
+
     jar_file_name = "infodynamics.jar"
     jar_location = imcn.__file__
     jar_location = jar_location.replace('__init__.py', '')
@@ -15,6 +23,10 @@ def get_jar_location():
 
 
 def init_jvm():
+    '''
+    initialize the JVM
+
+    '''
 
     jar_location = get_jar_location()
 
@@ -26,6 +38,22 @@ def init_jvm():
 
 
 def calc_TE(source, target, num_threads=1):
+    '''
+    Calculate transfer entropy
+
+    Parameters
+    ----------
+    source : numpy.ndarray
+        source time series
+    target : numpy.ndarray
+        target time series
+    num_threads : int
+        number of threads
+
+    Return: float
+        transfer entropy [bit]
+
+    '''
 
     init_jvm()
     calcTEClass = jp.JPackage(
@@ -40,6 +68,24 @@ def calc_TE(source, target, num_threads=1):
 
 
 def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1):
+
+    '''
+    calculate mutual information
+
+    Parameters
+    ----------
+    source : numpy.ndarray
+        source time series
+    target : numpy.ndarray
+        target time series
+    NUM_THREADS : int
+        number of threads
+    k : int
+        number of nearest neighbours
+    TIME_DIFF : int
+        time difference
+
+    '''
 
     assert((len(source) > 0) and (len(target) > 0))
     init_jvm()

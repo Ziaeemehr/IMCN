@@ -9,7 +9,7 @@ from numpy.random import uniform
 from imcn import calc_TE, calc_MI
 from jitcsim.models.kuramoto_sde import Kuramoto_II
 from imcn import time_average_correlation_matrix
-warnings.filterwarnings("ignore")  # to hide all warnings
+warnings.filterwarnings("ignore") 
 
 
 # -------------------------------------------------------------------
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     omega = [0.3, 0.4, 0.5]
     initial_state = uniform(-pi, pi, N)
     couplings = np.linspace(0.01, 0.3, 21)
-    noise_amplitude = 0.001
+    noise_amplitude = 0.0
     num_ensembles = 2
     num_processes = 4
     num_threads = 1

@@ -1,8 +1,9 @@
+import time
 import numba
+import random
 import numpy as np
 from numba import jit
 import networkx as nx
-import random
 
 
 @jit(nopython=True)
@@ -21,7 +22,9 @@ def correlation_matrix(x):
 @jit(nopython=False)
 def time_average_correlation_matrix(x, step=1):
     """
-    Cij = 1/nstep * |sum_{t=1}^{nstep} exp(i*(x_i[t]-x_j[t]))| 
+
+    .. math::
+        Cij = \\frac{1}{nstep} | \sum_{t=1}^{nstep} \exp^{i(x_i[t]-x_j[t])}| 
 
     Parameters
     ---------------
@@ -46,22 +49,57 @@ def time_average_correlation_matrix(x, step=1):
     return C_real
 
 
-def display_time(time):
+def display_time(time, message=""):
     ''' 
     show real time elapsed
+
+    Parameters
+    ---------------
+    time : float
+        time in seconds
     '''
-    hour = time//3600
+    hour = int(time/3600)
     minute = int(time % 3600) // 60
     second = time - (3600.0 * hour + 60.0 * minute)
-    print("Done in %d hours %d minutes %.4f seconds"
-          % (hour, minute, second))
+    print(f"{message:s} Done in {hour:d} hours {minute:d} minutes {second:.4f} seconds")
 
 
 def is_symmetric(a, rtol=1e-05, atol=1e-08):
+    '''
+    check if a matrix is symmetric
+
+    Parameters
+    ---------------
+    a : numpy.ndarray
+        matrix to be checked
+    rtol : float
+        relative tolerance
+    atol : float
+        absolute tolerance
+    '''
     return np.allclose(a, a.T, rtol=rtol, atol=atol)
 
 
 def select_random_edges(adj, num_links, directed=True, seed=None):
+    '''
+    select random edges from a graph
+
+    Parameters
+    ---------------
+    adj : numpy.ndarray
+        adjacency matrix of the graph
+    num_links : int
+        number of links to be selected
+    directed : bool
+        if True, the graph is directed
+    seed : int
+        random seed
+
+    Returns
+    ---------------
+    list of tuples
+
+    '''
 
     if seed is not None:
         random.seed(seed)
@@ -74,3 +112,21 @@ def select_random_edges(adj, num_links, directed=True, seed=None):
     links = random.sample(edges, num_links)
 
     return links
+
+
+def timer(func):
+    '''
+    decorator to measure elapsed time
+    Parameters
+    -----------
+    func: function
+        function to be decorated
+    '''
+
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        display_time(end-start, message="{:s}".format(func.__name__))
+        return result
+    return wrapper

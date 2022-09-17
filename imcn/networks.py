@@ -1,9 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import pylab as pl
-import networkx as nx
-from copy import copy
 from sys import exit
+import networkx as nx
 from imcn.utility import is_symmetric
 
 
@@ -22,7 +19,17 @@ class make_graph:
     #---------------------------------------------------------------#
     def complete_graph(self, N):
         ''' 
-        returns all to all graph 
+        returns adjacency matrix of a complete graph 
+
+        Parameters
+        ---------------
+        N : int
+            number of nodes
+
+        Returns
+        ---------------
+        numpy.ndarray
+
         '''
 
         self.N = N
@@ -34,6 +41,19 @@ class make_graph:
     def erdos_renyi_graph(self, N, p, directed=False):
         ''' 
         returns Erdos Renyi graph 
+
+        Parameters
+        ---------------
+        N : int
+            number of nodes
+        p : float
+            Probability for edge creation.
+        directed : bool, optional (default=False)
+            if True, the graph is directed
+
+        Returns
+        ---------------
+        numpy.ndarray
         '''
 
         self.N = N
@@ -45,7 +65,19 @@ class make_graph:
 
     def barabasi(self, N, m):
         ''' 
-        returns BA graph 
+        returns adjacency matrix of a Barabasi-Albert graph
+
+        Parameters
+        ---------------
+        N : int
+            number of nodes
+        m : int
+            number of edges to attach from a new node to existing nodes
+
+        Returns
+        ---------------
+        numpy.ndarray
+
         '''
 
         self.N = N
@@ -61,10 +93,16 @@ class make_graph:
                     gamma=0.4,
                     verbose=False):
         """
-        Frequency Gap-conditioned (FGC) network
-        @param N: the number of oscillators in the system (int)
-        @param k: degree of the network (int)
-        @param gamma: minimal frequency gap (float)
+        return adjacency matrix of a Frequency Gap-conditioned (FGC) network
+
+        Parameters
+        ---------------
+        N : int
+            number of nodes
+        omega : float
+            frequency gap
+        k : int
+            average degree of the network
         """
 
         # the number of links in the network
