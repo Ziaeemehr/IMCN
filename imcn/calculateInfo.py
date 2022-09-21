@@ -13,7 +13,6 @@ def get_jar_location():
         location of the infodynamics.jar file
 
     '''
-
     jar_file_name = "infodynamics.jar"
     jar_location = imcn.__file__
     jar_location = jar_location.replace('__init__.py', '')
@@ -27,7 +26,6 @@ def init_jvm():
     initialize the JVM
 
     '''
-
     jar_location = get_jar_location()
 
     if jp.isJVMStarted():
