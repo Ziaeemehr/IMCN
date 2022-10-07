@@ -5,7 +5,6 @@ from os.path import join
 
 
 def get_jar_location():
-
     '''
     Returns the location of the infodynamics.jar file
 
@@ -35,7 +34,7 @@ def init_jvm():
                     "-Djava.class.path=" + jar_location)
 
 
-def calc_TE(source, target, num_threads=1):
+def calc_TE(source, target, num_threads=1, num_surrogates=0):
     '''
     Calculate transfer entropy
 
@@ -61,12 +60,17 @@ def calc_TE(source, target, num_threads=1):
     calcTE.initialise()
     calcTE.setObservations(source, target)
     te = calcTE.computeAverageLocalOfObservations()
+    if num_surrogates > 0:
+        NullDist = calcTE.computeSignificance(num_surrogates)
+        NullMean = NullDist.getMeanOfDistribution()
+        NullStd = NullDist.getStdOfDistribution()
 
-    return te
+        return te, NullMean, NullStd
+    else:
+        return te
 
 
-def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1):
-
+def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1, num_surrogates=0):
     '''
     calculate mutual information
 
@@ -87,7 +91,7 @@ def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1):
 
     assert((len(source) > 0) and (len(target) > 0))
     init_jvm()
-    
+
     calcClass = jp.JPackage(
         "infodynamics.measures.continuous.kraskov").MutualInfoCalculatorMultiVariateKraskov2
     calc = calcClass()
@@ -98,4 +102,11 @@ def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1):
     calc.setObservations(source.tolist(), target.tolist())
     me = calc.computeAverageLocalOfObservations()
 
-    return me * 1.4426950408889634  # np.log2(np.exp(1)) in bits
+    if num_surrogates > 0:
+        NullDist = calc.computeSignificance(num_surrogates)
+        NullMean = NullDist.getMeanOfDistribution()
+        NullStd = NullDist.getStdOfDistribution()
+
+        return me * 1.4426950408889634, NullMean, NullStd
+    else:
+        return me * 1.4426950408889634  # np.log2(np.exp(1)) in bits
