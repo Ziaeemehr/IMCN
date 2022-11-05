@@ -60,14 +60,15 @@ def calc_TE(source, target, num_threads=1, num_surrogates=0):
     calcTE.initialise()
     calcTE.setObservations(source, target)
     te = calcTE.computeAverageLocalOfObservations()
+
+    NullMean, NullStd = 0.0, 0.0
     if num_surrogates > 0:
         NullDist = calcTE.computeSignificance(num_surrogates)
         NullMean = NullDist.getMeanOfDistribution()
         NullStd = NullDist.getStdOfDistribution()
 
-        return te, NullMean, NullStd
-    else:
-        return te
+    return te-NullMean, NullMean, NullStd
+    
 
 
 def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1, num_surrogates=0):
@@ -102,11 +103,11 @@ def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1, num_surrogates=0):
     calc.setObservations(source.tolist(), target.tolist())
     me = calc.computeAverageLocalOfObservations()
 
+    NullMean, NullStd = 0.0, 0.0
     if num_surrogates > 0:
         NullDist = calc.computeSignificance(num_surrogates)
         NullMean = NullDist.getMeanOfDistribution()
         NullStd = NullDist.getStdOfDistribution()
 
-        return me * 1.4426950408889634, NullMean, NullStd
-    else:
-        return me * 1.4426950408889634  # np.log2(np.exp(1)) in bits
+    return me * 1.4426950408889634 - NullMean, NullMean, NullStd
+    

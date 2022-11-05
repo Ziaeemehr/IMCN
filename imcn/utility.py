@@ -49,6 +49,41 @@ def time_average_correlation_matrix(x, step=1):
     return C_real
 
 
+@jit(nopython=False)
+def time_average_correlation_matrix_links(x, links, step=1):
+    """
+
+    .. math::
+        Cij = \\frac{1}{nstep} | \sum_{t=1}^{nstep} \exp^{i(x_i[t]-x_j[t])}| 
+
+    Parameters
+    ---------------
+    x : numpy.ndarray
+        [nstep by n] time course of coordinates of nodes
+    step: int
+        calculate correlations every 'step'
+
+    """
+
+    nstep, n = x.shape
+    C = np.zeros((n, n), dtype=complex)
+    C_real = np.zeros_like(C)
+
+    for it in range(0, nstep, step):
+        for e in links:
+            i, j = e
+            C[i, j] = C[i, j] + np.exp(complex(0, x[it, i]-x[it, j]))
+    C_real = 1.0/(nstep/step) * np.abs(C)
+
+    nl = len(links)
+    cor = np.zeros(nl)
+    for i in range(nl):
+        e = links[i]
+        cor[i] = C_real[e[0], e[1]]
+
+    return cor
+
+
 def display_time(time, message=""):
     ''' 
     show real time elapsed
