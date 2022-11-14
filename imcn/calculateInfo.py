@@ -66,8 +66,10 @@ def calc_TE(source, target, num_threads=1, num_surrogates=0):
         NullDist = calcTE.computeSignificance(num_surrogates)
         NullMean = NullDist.getMeanOfDistribution()
         NullStd = NullDist.getStdOfDistribution()
+    
+    te = te - NullMean if (te >= NullMean) else 0.0
 
-    return te-NullMean, NullMean, NullStd
+    return te, NullMean, NullStd
     
 
 
@@ -109,5 +111,7 @@ def calc_MI(source, target, NUM_THREADS=1, k=4, TIME_DIFF=1, num_surrogates=0):
         NullMean = NullDist.getMeanOfDistribution()
         NullStd = NullDist.getStdOfDistribution()
 
-    return me * 1.4426950408889634 - NullMean, NullMean, NullStd
+    me = me-NullMean if (me >= NullMean) else 0.0
+
+    return me * 1.4426950408889634, NullMean, NullStd
     
